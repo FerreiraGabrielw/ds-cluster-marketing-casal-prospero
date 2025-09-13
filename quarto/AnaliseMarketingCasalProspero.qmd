@@ -1,35 +1,35 @@
 ---
-title: "Projeto de Clusterização: Análise de Leads do Quiz Casal Próspero"
+title: "Clustering Project: Quiz Prosperous Couple Leads Analysis"
 author: "Gabriel Ferreira"
 date: "2025-06-04"
 format:
   html:
     page-layout: full
     code-fold: true
-    code-summary: "Mostrar Código"
+    code-summary: "Show Code"
     toc: false
     anchor-sections: false
 engine: jupytern
 jupyter: python3
 ---
-# Introdução
+# Introduction
 
-Analisar de dados coletados através de um quiz interativo, focado em casais planejando seu casamento. O intuito principal é segmentar esses leads para entender melhor seus perfis, necessidades e estágio no planejamento.
+Analyze data collected through an interactive quiz, focused on couples planning their wedding. The main purpose is to segment these leads to better understand their profiles, needs, and stage in planning.
 
-O objetivo principal foi utilizar técnicas de aprendizado não supervisionado (clusterização) para identificar grupos distintos de casais com base em suas respostas, permitindo a criação de estratégias de marketing mais eficazes e personalizadas.
+The main objective was to use unsupervised learning techniques (clustering) to identify distinct groups of couples based on their responses, allowing for the creation of more effective and personalized marketing strategies.
 
-# Estrutura do Projeto
+# Project Structure
 
-O desenvolvimento deste projeto seguiu uma metodologia estruturada e iterativa, abrangendo desde a coleta e preparação dos dados até a avaliação e interpretação dos resultados.
+The development of this project followed a structured and iterative methodology, covering everything from data collection and preparation to the evaluation and interpretation of results.
 
-## Coleta e Preparação de Dados
+## Data Collection and Preparation
 
-A fase inicial envolveu a consolidação e a limpeza dos dados. Os leads foram coletados de três fontes distintas, exigindo um processo de unificação e padronização para garantir a qualidade do dataset.
+The initial phase involved the consolidation and cleaning of data. Leads were collected from three distinct sources, requiring a unification and standardization process to ensure dataset quality.
 
-### Carregamento e Concatenação dos Dados
+### Data Loading and Concatenation
 
-- Fonte dos Dados: Coleta de respostas de um quiz online, distribuídas em 03 arquivos CSV.
-- Carregamento e Unificação: Leitura dos diferentes arquivos e consolidação em um único conjunto de dados.
+- Data Source: Collection of online quiz responses, distributed across 03 CSV files.
+- Loading and Unification: Reading different files and consolidating them into a single dataset.
 
 ```{python}
 #| include: false
@@ -53,36 +53,42 @@ import warnings
 warnings.filterwarnings('ignore')
 ```
 
-###### Carrega os datasets + 5 primeiras linhas do df01:
 ```{python}
-df_01 = pd.read_csv('leads_funil-casamento_df1.csv')
-df_02 = pd.read_csv('leads_funil-casamento_df2.csv')
-df_03 = pd.read_csv('leads_funil-casamento_df3.csv')
+#| include: false
+caminho_do_df1 = '../dados/leads_funil-casamento_df1.csv'
+caminho_do_df2 = '../dados/leads_funil-casamento_df2.csv'
+caminho_do_df3 = '../dados/leads_funil-casamento_df3.csv'
+df_01 = pd.read_csv(caminho_do_df1)
+df_02 = pd.read_csv(caminho_do_df2)
+df_03 = pd.read_csv(caminho_do_df3)
+```
+###### First 5 rows of df01:
+```{python}
 df_01.head(5)
 ```
 
-###### Contagem de cada coluna df01:
+###### Count of each column df01:
 ```{python}
 df_01.count()
 ```
 
-###### Contagem de cada coluna df02:
+###### Count of each column df02:
 ```{python}
 df_02.count()
 ```
 
 
-### Limpeza dos Dados
+### Data Cleaning
 
-As colunas created_at options: opcoes_UAa9JQ, code,button: oQcJxV, button: 0FvZw6,  button: enviar e tracking não contem informações relevantes para a analise portanto podemos remove-las do df01 e df02, as colunas , field: 11ABFZ,field: 3hxWeL, field: 5fSLVc possuem dados sobre o lead, porém possuem poucos dados para se trablhar então vamos remove-las também dos dfs.
+The columns created_at options: opcoes_UAa9JQ, code,button: oQcJxV, button: 0FvZw6, button: enviar and tracking do not contain relevant information for the analysis, so we can remove them from df01 and df02. The columns field: 11ABFZ, field: 3hxWeL, field: 5fSLVc contain data about the lead, but have too little data to work with, so we will also remove them from the dataframes..
 
-###### Remoção das colunas definidas nos df01 e df02:
+###### Removal of defined columns from df01 and df02:
 ```{python}
 df_01 = df_01.drop(columns=["created_at","options: opcoes_UAa9JQ","code", "button: oQcJxV", "button: 0FvZw6", "field: 11ABFZ", "field: 3hxWeL","field: 5fSLVc", "button: enviar", "tracking"])
 df_02 = df_02.drop(columns=["created_at","options: opcoes_UAa9JQ","code", "button: oQcJxV", "button: 0FvZw6", "field: 11ABFZ", "field: 3hxWeL","field: 5fSLVc", "button: enviar", "tracking"])
 ```
 
-Vamos remover as colunas: 
+Let's remove the columns:
 code
 button: oQcJxV
 options: opcoes_UAa9JQ
@@ -101,9 +107,9 @@ field: 5fSLVc
 button: enviar
 tracking
 
-do df_03, pelos mesmos motivos da remoção das colunas do df1 e df02
+from df_03, for the same reasons as the removal of columns from df1 and df02.
 
-###### Remoção das colunas definidas do df03:
+###### Removal of defined columns from df03:
 ```{python}
 df_03 = df_03.drop(columns=["created_at","code", "button: oQcJxV","options: opcoes_UAa9JQ","button: 0FvZw6",
                             "button: 0FvZw6", "options: opcoes_PhNxWH", "options: opcoes_NMBS1J", "options: opcoes_Peavhn",
@@ -111,9 +117,9 @@ df_03 = df_03.drop(columns=["created_at","code", "button: oQcJxV","options: opco
                             "options: opcoes_yYueg1","field: 11ABFZ", "field: 3hxWeL","field: 5fSLVc", "button: enviar", "tracking"])
 ```
 
-Agora os três df tem as mesmas colunas, vamos renomea-las e concatenar os dataframes
+Now all three dataframes have the same columns, let's rename them and concatenate the dataframes.
 
-###### Renomeação das Colunas e Concatenando os dataframes:
+###### Column Renaming and Concatenating the dataframes:
 ```{python}
 rename_dict = {
     'options: opcoes_KxEbYn': 'pergunta_1',
@@ -133,16 +139,16 @@ df_03 = df_03.rename(columns=rename_dict)
 df_gf = pd.concat([df_01, df_02, df_03], ignore_index=True)
 ```
 
-###### Amostra do df limpo e concatenado:
+###### Sample of the cleaned and concatenated dataframe:
 ```{python}
 df_gf.sample(3)
 ```
 
-Percebemos que existem resposta com a letra A/B/C/D antes da resposta e outras respostas não a possuem, precisamos mapear ambos os cenários
+We noticed that some answers have the letter A/B/C/D before the answer and other answers do not. We need to map both scenarios.
 
-###### Mapeando as respostas (com e sem letra):
+###### Mapping responses (with and without letter):
 ```{python}
-# Dicionário para mapear respostas com letra
+# Dictionary to map responses with letter
 mapeamento_com_letra = {
     '(A) Ainda estamos completamente perdidos sobre tudo': 'A',
     '(B) Temos algumas referências, mas nada decidido': 'B',
@@ -184,7 +190,7 @@ mapeamento_com_letra = {
     '(C) Estamos dispostos, só falta um plano eficaz': 'C',
     '(D) Estamos prontos, queremos agir e realizar de verdade': 'D'
 }
-# Dicionário para mapear respostas sem letra
+# Dictionary to map responses without letter
 mapeamento_sem_letra = {
     'Ainda estamos completamente perdidos sobre tudo': 'A',
     'Temos algumas referências, mas nada decidido': 'B',
@@ -226,10 +232,10 @@ mapeamento_sem_letra = {
     'Estamos dispostos, só falta um plano eficaz': 'C',
     'Estamos prontos, queremos agir e realizar de verdade': 'D'
 }
-# Função para mapear as respostas
+# Function to map responses
 def mapear_resposta(resposta, mapeamento_letra, mapeamento_sem):
-    if isinstance(resposta, str):  # Verifica se é string
-        resposta = resposta.strip()  # Remove espaços
+    if isinstance(resposta, str):
+        resposta = resposta.strip()
     
     resposta_mapeada = mapeamento_letra.get(resposta)
     if resposta_mapeada:
@@ -238,26 +244,26 @@ def mapear_resposta(resposta, mapeamento_letra, mapeamento_sem):
     resposta_mapeada = mapeamento_sem.get(resposta)
     if resposta_mapeada:
         return resposta_mapeada
-# Aplica a função a todas as colunas de perguntas
+# Applies the function to all question columns
 colunas_perguntas = ['pergunta_1', 'pergunta_2', 'pergunta_3', 'pergunta_4', 'pergunta_5', 'pergunta_6', 'pergunta_7', 'pergunta_8']
 df_gf[colunas_perguntas] = df_gf[colunas_perguntas].applymap(lambda resposta: mapear_resposta(resposta, mapeamento_com_letra, mapeamento_sem_letra))
 ```
 
-### Tratamento de Valores Ausentes
+### Handling Missing Values
 
-###### Describe do df:
+###### Describe of the dataframe:
 ```{python}
 df_gf.describe()
 ```
 
-###### Verificando valores nulos:
+###### Checking for missing values:
 ```{python}
 print(df_gf.isnull().sum())
 ```
 
-Como temos bastante valores Nan, decidimos remover todas as linhas que possuem todas as perguntas sem resposta e posteriormente substituir as linhas que possuem NaN mas não em todas as perguntas pela moda de cada pergunta.
+Since we have a lot of NaN values, we decided to remove all rows that have all questions unanswered and then replace the rows that have NaN but not in all questions with the mode of each question.
 
-###### Removendo linhas com valores nulos:
+###### Removing rows with null values:
 ```{python}
 # Contar diretamente as linhas onde todas as colunas são NaN
 num_linhas_todas_nan = df_gf.isna().all(axis=1).sum()
@@ -267,9 +273,9 @@ df_gf= df_gf.dropna(how='all')
 print(df_gf.isnull().sum())
 ```
 
-Agora vamos analisar os dados para saber a volumetria de valores ausentes por pergunta e como estão distribuidas as respostas para cada pergunta
+Now let's analyze the data to find the volume of missing values per question and how the answers are distributed for each question.
 
-###### Calculando o percentual de valores ausentes em cada coluna:
+###### Calculating the percentage of missing values in each column:
 ```{python}
 # Calculando o percentual de valores ausentes em cada coluna
 percentual_na_perguntas = df_gf.isna().mean() * 100
@@ -277,9 +283,9 @@ percentual_na_perguntas = df_gf.isna().mean() * 100
 print(percentual_na_perguntas)
 ```
 
-Antes de realizar a limpeza dos valores nan vamos olhar como os dados estao distribuidos
+Before cleaning the nan values, let's look at how the data is distributed.
 
-###### Criando gráfico sem valores nulos:
+###### Creating chart without null values:
 ```{python}
 # Criando um df sem os valores nan
 df_limpo = df_gf.dropna()
@@ -292,8 +298,8 @@ cores = px.colors.qualitative.Vivid
 fig = sp.make_subplots(
     rows=2, cols=4, 
     subplot_titles=perguntas,
-    horizontal_spacing=0.10,  # aumenta o espaço entre subplots
-    vertical_spacing=0.13     # aumenta o espaço entre as linhas
+    horizontal_spacing=0.10,
+    vertical_spacing=0.13
 )
 for i, pergunta in enumerate(perguntas):
     contagem = df_limpo[pergunta].value_counts().sort_index()
@@ -308,26 +314,26 @@ for i, pergunta in enumerate(perguntas):
         row=(i//4)+1, col=(i%4)+1
     )
 fig.update_layout(
-    height=500,  # Diminua ou aumente conforme preferir
-    width=900,   # Largura reduzida para evitar barra de rolagem lateral
+    height=500,
+    width=900,
     title={
-        'text': "Frequência de Respostas por Pergunta",
-        'y': 0.98,          # Mais próximo do topo
-        'x': 0.5,           # Centralizado
+        'text': "Frequency of Answers per Question",
+        'y': 0.98,          
+        'x': 0.5,           
         'xanchor': 'center',
         'yanchor': 'top',
-        'pad': {'b': 28}    # Espaço inferior do título para distanciar das labels
+        'pad': {'b': 28}
     },
-    margin=dict(t=95, b=60, l=40, r=40),  # Margens superiores/abaixo para distanciar título e labels
+    margin=dict(t=95, b=60, l=40, r=40),
     showlegend=False,
     template="plotly_white"
 )
 fig.show()
 ```
 
-Como temos um percentual baixo de valores nulos atualmente no dataset, vamos substituir os valores nulos pela Moda de cada pergunta.
+Since we currently have a low percentage of null values in the dataset, we will replace the null values with the Mode of each question.
 
-###### Imputando valores nulos com a moda de cada coluna:
+###### Imputing null values with the mode of each column:
 ```{python}
 for col in df_gf.columns:
     if col.startswith('pergunta'):
@@ -335,14 +341,14 @@ for col in df_gf.columns:
         df_gf[col].fillna(moda, inplace=True)
 ```
 
-###### Verificando valores nulos novamente:
+###### Checking for null values again:
 ```{python}
 print(df_gf.isnull().sum())
 ```
 
-Vamos criar um dicionário de dados caso seja necessário consultar as peruntas e alterantivas durante a análise
+Let's create a data dictionary in case it's necessary to consult the questions and alternatives during the analysis.
 
-###### Criando um dicionário com todas as perguntas e alternativas:
+###### Creating a dictionary with all questions and alternatives:
 ```{python}
 perguntas_dict = {
     "pergunta_1": {
@@ -420,15 +426,15 @@ perguntas_dict = {
 }
 ```
 
-## 3. Construção e Validação de Modelos
+## 3. Model Building and Validation
 
-O algoritmo KMeans utiliza a distância euclidiana entre os pontos para formar clusters. A distância euclidiana é uma medida de quão longe dois pontos estão um do outro no espaço euclidiano. A correlação pode ter impacto significativo em modelos de clusterização como o KMeans, pois o KMeans utiliza a distância euclidiana entre os pontos para formar clusters. Variáveis altamente correlacionadas podem influenciar desproporcionalmente as distâncias entre os pontos, levando a possíveis distorções nos clusters formados.
+The KMeans algorithm uses the Euclidean distance between points to form clusters. Euclidean distance is a measure of how far apart two points are in Euclidean space. Correlation can have a significant impact on clustering models like KMeans, as KMeans uses Euclidean distance between points to form clusters. Highly correlated variables can disproportionately influence the distances between points, leading to possible distortions in the formed clusters.
 
-Precisamos considerar os pontos de Multicolinearidade (se duas variáveis são altamente correlacionadas)a escala das variáveis (já que o KMeans é sensível à escala e a redução de dimensionalidade (para acelerar o processo de agrupamento quando se tem um grande número de variáveis).
+We need to consider multicollinearity (if two variables are highly correlated), the scale of variables (since KMeans is sensitive to scale), and dimensionality reduction (to speed up the grouping process when there are a large number of variables).
 
-Portanto, antes de aplicar o KMeans, vamos analisar a correlação dos dados categóricos primeiramente. Vamos utilizar o Cramér's V. que é uma medida de associação entre duas variáveis categóricas, mede quão associadas estão duas variáveis nominais.
+Therefore, before applying KMeans, let's first analyze the correlation of categorical data. We will use Cramér's V, which is a measure of association between two categorical variables, measuring how associated two nominal variables are.
 
-### Calculando Matriz de Cramer's V e fazendo a análise:
+### Calculating Cramer's V Matrix and performing the analysis:
 ```{python}
 # Função para calcular Cramer's V
 def cramers_v(x, y):
@@ -456,17 +462,17 @@ for col1 in categorical_columns:
 cramers_results
 ```
 
-# Visualizando a matriz de correlação:
+# Visualizing the correlation matrix:
 ```{python}
 plt.figure(figsize=(10,8))
 sns.heatmap(cramers_results, annot=True, cmap='coolwarm', vmin=0, vmax=1)
-plt.title("Cramér's V - Correlação entre as variáveis categóricas")
+plt.title("Cramér's V - Correlation between categorical variables")
 plt.show()
 ```
 
-Não possuimos variáveis altamente correlacionadas, mas vamos analisar as três maiores correlações para avaliar a consistência desse dataset.
+We do not have highly correlated variables, but let's analyze the three largest correlations to assess the consistency of this dataset.
 
-###### Avaliando as três maiores correalações:
+###### Evaluating the three largest correlations:
 ```{python}
 # Transformar a matriz em long format (par variável - valor de correlação)
 corr_pairs = (
@@ -480,40 +486,40 @@ top_corr = corr_pairs.sort_values(by='Cramers_V', ascending=False).head(3)
 print(top_corr)
 ```
 
-###### Analisando corelação entre perguntas 1 e 4:
+###### Analyzing correlation between questions 1 and 4:
 ```{python}
 perguntas_dict["pergunta_1"]["texto"], perguntas_dict["pergunta_4"]["texto"]
 ```
 
-Essa correlação faz sentido pois quem tem clareza sobre o casamento que deseja tende a estar mais organizado em relação ao planejamento.
+This correlation makes sense because those who have clarity about the wedding they desire tend to be more organized regarding the planning.
 
-###### Analisando correlação entre perguntas 4 e 8:
+###### Analyzing correlation between questions 4 and 8:
 ```{python}
 perguntas_dict["pergunta_4"]["texto"], perguntas_dict["pergunta_8"]["texto"]
 ```
 
-Essa correlação também faz sentido pois quem está mais organizado estará mais comprometido em realizar o casamento
+This correlation also makes sense because those who are more organized will be more committed to making the wedding happen.
 
-###### Analisando correlação entre perguntas 2 e 5:
+###### Analyzing correlation between questions 2 and 5:
 ```{python}
 perguntas_dict["pergunta_2"]["texto"], perguntas_dict["pergunta_5"]["texto"]
 ```
 
-Essas perguntas também possuem uma correlação justificavel pois a depender da sitação financeira do casal impactará diretamente na possibilidade de investimento atual no casamento.
+These questions also have a justifiable correlation, as the couple's financial situation will directly impact the possibility of current investment in the wedding
 
-**Conclusão**
+**Conclusion**
 
-- Não existem relações muito fortes entre as perguntas, o que é esperado em questionários bem desenhados onde as perguntas medem aspectos distintos, mesmo que relacionados (não há alto risco de multicolinearidade.).
-- As maiores correlações são classificadas como moderadas ou fracas, indicando que cada pergunta captura aspectos diferentes do perfil ou situação dos leads.
+- There are no very strong relationships between the questions, which is expected in well-designed questionnaires where questions measure distinct, albeit related, aspects (no high risk of multicollinearity).
+- The highest correlations are classified as moderate or weak, indicating that each question captures different aspects of the leads' profile or situation.
 
-Ainda aplicaresmo o PCA  para redução de dimensionalidade, mas não é obrigatória por questões de multicolinearidade entre as variáveis, e sim pois temos ineresse em reduzir complexidade computacional e melhorar a eficiência do KNN em espaços de alta dimensionalidade.
+We will still apply PCA for dimensionality reduction, but it is not mandatory due to multicollinearity between variables, but rather because we are interested in reducing computational complexity and improving the efficiency of KNN in high-dimensional spaces.
 
 
-### Aplicação do One-Hot-Encoding 
+### One-Hot-Encoding Application
 
-Como temos muitas features e precisamos alimentar o algoritimo com variáveis numéricas, aplicaremos OHE com a o paramêtro drop_firtst=True. o OHE transforma variáveis categóricas em formato numérico binário, essencial para algoritmos que não lidam nativamente com categorias como é o caso do KMeans.
+Since we have many features and need to feed the algorithm with numerical variables, we will apply OHE with the drop_first=True parameter. OHE transforms categorical variables into a binary numerical format, essential for algorithms that do not natively handle categories, as is the case with KMeans.
 
-###### Aplicando One-Hot Encoding com drop_first=True:
+###### Applying One-Hot Encoding with drop_first=True:
 ```{python}
 # Instanciando o codificador
 ohe = OneHotEncoder(drop='first', sparse=False)
@@ -527,15 +533,15 @@ df_gf_ohe = pd.DataFrame(ohe_array, columns=ohe_columns, index=df_gf.index)
 df_gf_ohe.sample(10)
 ```
 
-Podemos visualizar o uso do parâmetro drop='first' que remove a primeira categoria de cada variável para diminuir a dimensionaliade, temos 24 features no lugar de 32.
+We can see the use of the drop='first' parameter, which removes the first category of each variable to reduce dimensionality; we have 24 features instead of 32.
 
-### Aplicação do PCA
+### PCA Application
 
-A Análise de Componentes Principais (PCA - Principal Component Analysis) é uma técnica estatística de redução de dimensionalidade que transforma um conjunto de variáveis possivelmente correlacionadas em um novo conjunto de variáveis não correlacionadas, chamadas de componentes principais.
+Principal Component Analysis (PCA) is a statistical dimensionality reduction technique that transforms a set of possibly correlated variables into a new set of uncorrelated variables, called principal components.
 
-O objetivo para o nosso projeto é capturar o máximo de variabilidade dos dados nos primeiras componentes e facilitar visualização, clustering, classificação e reduzir ruído. O OHE gera um aumento considerável da dimensionalidade (no caso desse projeto, de 8 perguntas para 24 variáveis após `drop_first=True`.
+The objective for our project is to capture the maximum variability of the data in the first components and facilitate visualization, clustering, classification, and reduce noise. OHE significantly increases dimensionality (in this project's case, from 8 questions to 24 variables after drop_first=True).
 
-###### Aplicando o PCA
+###### Applying PCA
 ```{python}
 # Padronizando os dados
 scaler = StandardScaler()
@@ -552,9 +558,9 @@ df_pca = pd.DataFrame(df_pca, columns=[f'PC{i+1}' for i in range(df_pca.shape[1]
 print(df_pca.head())
 ```
 
-O resultado da análise de componentes principais tem como inuito nos dar base para decidirmos quantas variáveis iremos utilizar e quanta variância total conseguimos explicar nesse dataset. Portanto devemos escolher entre 01 a 24 PCs e tomar uma decisão com base em "quanto queremos explicar desses dados", ou seja o mínimo de componentes necessários para ter máximo de interpretabilidade. 
+The result of the principal component analysis aims to provide a basis for us to decide how many variables we will use and how much total variance we can explain in this dataset. Therefore, we should choose between 01 to 24 PCs and make a decision based on "how much we want to explain from this data," i.e., the minimum components needed to have maximum interpretability.
 
-###### Gráfico da Variância Acumulada:
+###### Scree Plot - Explained Variance by PCA:
 ```{python}
 # Dados da variância explicada
 variancia_acumulada = np.cumsum(pca.explained_variance_ratio_)
@@ -567,13 +573,13 @@ fig.add_trace(
         mode='lines+markers',
         line=dict(dash='dash', width=2),
         marker=dict(size=8, color='blue'),
-        name='Variância Acumulada'
+        name='Accumulated Variance'
     )
 )
 fig.update_layout(
-    title='Scree Plot - Variância Explicada pelo PCA',
-    xaxis_title='Número de Componentes',
-    yaxis_title='Variância Explicada Acumulada',
+    title='Scree Plot - Explained Variance by PCA',
+    xaxis_title='Number of Components',
+    yaxis_title='Accumulated Explained Variance',
     template='plotly_white',
     width=800,
     height=500
@@ -581,27 +587,27 @@ fig.update_layout(
 fig.show()
 ```
 
-###### Visualizando a variância explicada por cada componente:
+###### Visualizing the explained variance by each component:
 ```{python}
 for i, var in enumerate(pca.explained_variance_ratio_):
-    print(f'PC{i+1}: {var:.4f} ({np.cumsum(pca.explained_variance_ratio_)[i]:.4f} acumulado)')
+    print(f'PC{i+1}: {var:.4f} ({np.cumsum(pca.explained_variance_ratio_)[i]:.4f} accumulated)')
 ```
 
-Optamos por utilizar 17 componentes principais, que preservam 90,31% da variância total do dataset, garantindo um equilíbrio entre simplificação dos dados e manutenção da informação. Esse valor foi determinado com base na análise do scree plot e da distribuição acumulada de variância, que mostra ausência de cotovelo claro, característico de dados categóricos. Essa estratégia permite acelerar o processamento, melhorar a performance do modelo e ainda manter robustez analítica.
+We chose to use 17 principal components, which preserve 90.31% of the total variance of the dataset, ensuring a balance between data simplification and information maintenance. This value was determined based on the analysis of the scree plot and the accumulated variance distribution, which shows the absence of a clear elbow, characteristic of categorical data. This strategy allows for faster processing, improved model performance, and maintained analytical robustness.
 
-### Definindo o Valor de K em Modelos de Clusterização
+### Defining the Value of K in Clustering Models
 
-O algoritmo KMeans é uma técnica de agrupamento de dados que organiza um conjunto de pontos em grupos (ou "clusters") com base em suas semelhanças. A escolha do valor adequado de k é uma etapa importante do projeto, pois pode afetar significativamente a utilidade dos clusters formados, para isso utlizaremos o Elbow Method (Método do Cotovelo) e o Silhouette Score para auxiliar a definir um ótimo valor para k.
+The KMeans algorithm is a data clustering technique that organizes a set of points into groups (or "clusters") based on their similarities. Choosing the appropriate value of k is an important step in the project, as it can significantly affect the usefulness of the formed clusters. To do this, we will use the Elbow Method and the Silhouette Score to help define an optimal value for k.
 
-**Definindo o valor ideal de K**
+**Defining the ideal value of K**
 
-###### Gerando Dataset com 17 componentes principais:
+###### Generating Dataset with 17 principal components::
 ```{python}
 pca = PCA(n_components=17)
 df_pca = pca.fit_transform(df_gf_ohe)
 ```
 
-###### Método do Cotovelo:
+###### Elbow Method:
 ```{python}
 inertia = []
 K_range = range(1, 11)
@@ -613,7 +619,7 @@ for k in K_range:
 fig = go.Figure()
 fig.add_trace(
     go.Scatter(
-        x=list(K_range),  # Convertendo range para lista
+        x=list(K_range),
         y=inertia,
         mode='lines+markers',
         marker=dict(size=8, color='blue'),
@@ -622,8 +628,8 @@ fig.add_trace(
     )
 )
 fig.update_layout(
-    title='Método do Cotovelo',
-    xaxis_title='Número de Clusters (K)',
+    title='Elbow Method',
+    xaxis_title='Number of Clusters (K)',
     yaxis_title='Inertia',
     template='plotly_white',
     width=800,
@@ -632,11 +638,11 @@ fig.update_layout(
 fig.show()
 ```
 
-Interpretação: avalia a soma das distâncias quadráticas internas aos clusters (Soma dos Erros Quadrados - SSE) em função de diferentes valores de k. À medida que k aumenta, o erro diminui, pois os clusters ficam menores e mais específicos. No gráfico de SSE vs. k, busca-se o ponto onde há uma "quebra" ou "dobra" (um cotovelo). Esse ponto indica que aumentar k além dali traz ganhos marginais na redução do erro, sinalizando o número ótimo de clusters.
+Interpretation: evaluates the sum of squared distances within clusters (Sum of Squared Errors - SSE) as a function of different k values. As k increases, the error decreases, as the clusters become smaller and more specific. In the SSE vs. k graph, we look for the point where there is a "break" or "bend" (an elbow). This point indicates that increasing k beyond it brings marginal gains in error reduction, signaling the optimal number of clusters.
 
-Conseguimos ver onde a curva forma um cotovelo entre os valores 2 e 3, sendo o valor k=2 um pouco mais acentuado em sua curvatura sugerindo o melhor valor de K, porém não fica muito distinto para k=3
+We can see where the curve forms an elbow between values 2 and 3, with k=2 being slightly more accentuated in its curvature, suggesting the best value for K, but it's not very distinct for k=3.
 
-###### Índice de Silhouette:
+###### Silhouette Index:
 ```{python}
 silhouette_scores = []
 K_range_sil = range(2, 11)
@@ -665,8 +671,8 @@ fig_silhouette.add_trace(
 )
 
 fig_silhouette.update_layout(
-    title='Análise do Índice de Silhouette',
-    xaxis_title='Número de Clusters (K)',
+    title='Silhouette Index Analysis',
+    xaxis_title='Number of Clusters (K)',
     yaxis_title='Silhouette Score',
     template='plotly_white',
     width=800,
@@ -676,27 +682,27 @@ fig_silhouette.update_layout(
 fig_silhouette.show()
 ```
 
-###### Verificando os valores de silhouette:
+###### Checking silhouette values:
 ```{python}
 for k, score in zip(K_range_sil, silhouette_scores):
     print(f"K={k}: Silhouette Score={score:.4f}")
 ```
 
-Interpretação: Os valoresm medem a qualidade dos clusters calculando o quão semelhante um ponto é ao seu próprio cluster em comparação com outros clusters. O valor varia entre -1 (má agrupamento) e 1 (ótimo agrupamento).Aqui consiguimos visualizar  o melhor valor para k=3, mas muito próximo para k=2.
+Interpretation: The values measure the quality of clusters by calculating how similar a point is to its own cluster compared to other clusters. The value ranges between -1 (poor grouping) and 1 (optimal grouping). Here we can visualize the best value for k=3, but very close for k=2.
 
-### Resultados e decisão
+### Results and Decision
 
-**Método do Cotovelo - K = 2**
-O cotovelo mostra onde a redução da inércia começa a se estabilizar.
+**Elbow Method - K = 2**
+The elbow shows where the reduction in inertia begins to stabilize.
 
-Interpretação prática: Os dados podem ter duas macro estruturas, ou seja, uma divisão mais grosseira.
+Practical interpretation: The data may have two macro structures, meaning a coarser division.
 
-**Silhouette - Melhor em K = 3**
-O maior valor de silhouette (0.1239) ocorre com K=3.
+**Silhouette - Best at K = 3**
+The highest silhouette value (0.1239) occurs with K=3.
 
-Vamos utilizar k = 2 e k=3 e analisar qual algoritimo melhor se encaixa para nosso projeto
+We will use k=2 and k=3 and analyze which algorithm best suits our project.
 
-###### Aplicando Algoritimo KMeans para K=2 e K=3:
+###### Applying KMeans Algorithm for K=2 and K=3:
 ```{python}
 # Aplicar KMeans para k=2
 kmeans_k2 = KMeans(n_clusters=2, random_state=42)
@@ -712,7 +718,7 @@ df_clusters_k3 = pd.DataFrame(df_pca, columns=[f'PC{i+1}' for i in range(df_pca.
 df_clusters_k3['Cluster'] = clusters_k3
 ```
 
-###### Avaliação Quantitativa dos dois modelos -- Silhouete Score:
+###### Quantitative Evaluation of the two models -- Silhouette Score:
 ```{python}
 silhouette_k2 = silhouette_score(df_pca, clusters_k2)
 silhouette_k3 = silhouette_score(df_pca, clusters_k3)
@@ -720,19 +726,19 @@ print(f'Silhouette Score K=2: {silhouette_k2}')
 print(f'Silhouette Score K=3: {silhouette_k3}')
 ```
 
-###### Distribuição dos Clusters:
+###### Cluster Distribution:
 ```{python}
 ## Distribuição dos Clusters
-print("\nDistribuição dos Clusters - K=2")
+print("\nCluster Distribution - K=2")
 print(pd.Series(clusters_k2).value_counts())
 
-print("\nDistribuição dos Clusters - K=3")
+print("\nCluster Distribution - K=3")
 print(pd.Series(clusters_k3).value_counts())
 ```
 
-###### Comparativo entre K=2 e K=3:
+###### Comparison between K=2 and K=3:
 ```{python}
-fig = make_subplots(rows=1, cols=2, subplot_titles=('Clusters com K=2', 'Clusters com K=3'))
+fig = make_subplots(rows=1, cols=2, subplot_titles=('Clusters with K=2', 'Clusters with K=3'))
 
 # Cores para K=2
 unique_clusters_k2 = sorted(df_clusters_k2['Cluster'].unique())
@@ -758,7 +764,7 @@ for i, cluster_val in enumerate(unique_clusters_k2):
         legendgroup='k2_group'
     ), row=1, col=1)
 
-# Cores fixas para K=3 (vermelho, azul, verde)
+# Cores fixas para K=3
 cores_k3 = ['red', 'blue', 'green']
 unique_clusters_k3 = sorted(df_clusters_k3['Cluster'].unique())
 for i, cluster_val in enumerate(unique_clusters_k3):
@@ -783,14 +789,14 @@ fig.update_yaxes(title_text="PC2", row=1, col=1)
 fig.update_xaxes(title_text="PC1", row=1, col=2)
 fig.update_yaxes(title_text="PC2", row=1, col=2)
 
-# Layout ajustado (e ocultando a legenda)
+# Layout ajustado
 fig.update_layout(
     width=1100,
     height=550,
     hovermode='closest',
     showlegend=False,
     title={
-        'text': "Distribuição dos Clusters no espaço para K=1 e K=2",
+        'text': "Cluster Distribution in space for K=1 and K=2",
         'y': 0.97,
         'x': 0.5,
         'xanchor': 'center',
@@ -804,7 +810,7 @@ fig.update_layout(
 fig.show()
 ```
 
-###### Visualizando o centro de cada cluster:
+###### Visualizing the center of each cluster:
 ```{python}
 cluster_colors = ['red', 'blue', 'green']
 fig = go.Figure()
@@ -831,28 +837,28 @@ fig.add_trace(go.Scatter(
         color='black',
         symbol='x'
     ),
-    name='Centróides'
+    name='Centroids'
 ))
 fig.update_layout(
-    title="Centroídes de cada Cluster com k=3",
-    xaxis_title=df_clusters_k3.columns[0] if len(df_clusters_k3.columns) > 0 else 'Componente 1',
-    yaxis_title=df_clusters_k3.columns[1] if len(df_clusters_k3.columns) > 1 else 'Componente 2',
-    legend_title_text='Legenda',
+    title="Centroids of each Cluster with k=3",
+    xaxis_title=df_clusters_k3.columns[0] if len(df_clusters_k3.columns) > 0 else 'Component 1',
+    yaxis_title=df_clusters_k3.columns[1] if len(df_clusters_k3.columns) > 1 else 'Component 2',
+    legend_title_text='Legend',
     width=900,
     height=650,
 )
 fig.show()
 ```
 
-### Escolha de K=3
+### Choice of K=3
 
-Embora a métrica de Silhouette seja apenas levemente superior em K=3 (0.1239) comparado a K=2 (0.1198), ela ainda sugere que o modelo com três clusters oferece uma divisão mais refinada dos perfis comportamentais dos respondentes.
+Although the Silhouette metric is only slightly superior for K=3 (0.1239) compared to K=2 (0.1198), it still suggests that the model with three clusters offers a more refined division of respondents' behavioral profiles.
 
-Os gráficos PCA 2D mostra alguma sobreposição entre os clusters (consistente com os baixos scores de silhueta), mas também revela que os centros dos clusters estão em posições distintas, indicando que o K-Means conseguiu encontrar padrões diferentes e indicando que os grupos capturam diferenças relevantes nos perfis de comportamento.
+The 2D PCA plots show some overlap between clusters (consistent with low silhouette scores) but also reveal that the cluster centers are in distinct positions, indicating that K-Means successfully found different patterns and that the groups capture relevant differences in behavioral profiles.
 
-## Interpretação dos Clusters e Geração de Insights
+## Cluster Interpretation and Insight Generation
 
-###### Obtendo e visualuando os os centroides:
+###### Getting and visualizing the centroids:
 ```{python}
 centroids_pca = kmeans_k3.cluster_centers_
 centroids_ohe = pca.inverse_transform(centroids_pca)
@@ -860,21 +866,21 @@ centroids_df = pd.DataFrame(centroids_ohe, columns=ohe.get_feature_names_out())
 print(centroids_df)
 ```
 
-###### Tabela de frequência das respostas em cada Cluster:
+###### Frequency table of answers in each Cluster:
 ```{python}
 # Junta o cluster ao dataframe original
 df_clusters = df_gf.copy()
 df_clusters['Cluster'] = clusters_k3
 
 titulos_perguntas = {
-    'pergunta_1': 'Nível de clareza',
-    'pergunta_2': 'Situação financeira atual',
-    'pergunta_3': 'Apoio e envolvimento',
-    'pergunta_4': 'Nível de organização do planejamento',
-    'pergunta_5': 'Possibilidade de investimento atual',
-    'pergunta_6': 'Estilo de casamento desejado',
-    'pergunta_7': 'Planejamento da lua de mel',
-    'pergunta_8': 'Comprometimento em tornar realidade'
+    'pergunta_1': 'Clarity Level',
+    'pergunta_2': 'Current Financial Situation',
+    'pergunta_3': 'Support and Involvement',
+    'pergunta_4': 'Planning Organization Level',
+    'pergunta_5': 'Current Investment Possibility',
+    'pergunta_6': 'Desired Wedding Style',
+    'pergunta_7': 'Honeymoon Planning',
+    'pergunta_8': 'Commitment to make it real'
 }
 
 perguntas = df_gf.columns.tolist()
@@ -894,7 +900,7 @@ fig = make_subplots(
     rows=n_rows,
     cols=n_cols,
     subplot_titles=subplot_titles_list,
-    horizontal_spacing=0.07,  # Espaço confortável entre subplots
+    horizontal_spacing=0.07,
     vertical_spacing=0.12
 )
 
@@ -923,7 +929,7 @@ for i, pergunta in enumerate(perguntas):
             y=y_values,
             name=f'Cluster {cluster_val}',
             marker_color=cluster_color_map[cluster_val],
-            showlegend=False  # Sem legenda em nenhum subplot
+            showlegend=False
         ), row=row_num, col=col_num)
 
     fig.update_xaxes(
@@ -942,13 +948,13 @@ for i, pergunta in enumerate(perguntas):
     )
 
 fig.update_layout(
-    height=1100,    # Maior altura
-    width=1100,     # Maior largura
+    height=1100,
+    width=1100,
     barmode='group',
     template='plotly_white',
-    showlegend=False,  # Remove legenda do lado direito
+    showlegend=False,
     title={
-        'text': 'Frequência das respostas em cada Cluster',
+        'text': 'Frequency of answers in each Cluster',
         'x': 0.5,
         'xanchor': 'center',
         'yanchor': 'top',
@@ -961,7 +967,7 @@ fig.update_layout(
 fig.show()
 ```
 
-###### Calculando as 5 primeiras médias de cada resposta por cluster:
+###### Calculating the top 5 averages for each answer per cluster:
 ```{python}
 df_encoded = pd.get_dummies(df_clusters.drop('Cluster', axis=1), prefix_sep='_', drop_first=False)
 df_encoded['Cluster'] = df_clusters['Cluster']
@@ -980,7 +986,7 @@ for i, cluster in enumerate(centroids.index):
     fig.add_trace(
         go.Table(
             header=dict(
-                values=["Resposta", "Proporção"],
+                values=["Answer", "Proportion"],
                 fill_color="lightgrey",
                 align="left",
                 font=dict(color="black", size=12)
@@ -999,119 +1005,113 @@ fig.update_layout(
     width=1000,
     template="plotly_white",
     title={
-        'text': 'Respostas mais representativas por Cluster',
+        'text': 'Most representative answers per Cluster',
         'x': 0.5,
         'xanchor': 'center',
         'yanchor': 'top',
         'y': 0.96,
-        'pad': {'b': 15}  # Separação do título para as tabelas
+        'pad': {'b': 15}
     },
     margin=dict(t=70, b=35, l=30, r=30)
 )
 fig.show()
 ```
 
-Com base na análise dos centroides, que representam os valores médios (proporções de escolha) de cada resposta dentro de cada cluster, podemos interpretar que:
+Based on the analysis of the centroids, which represent the average values (choice proportions) of each answer within each cluster, we can interpret that:
 
-- Quanto mais próximo de 1, mais predominante é essa característica no grupo.
+- The closer to 1, the more predominant this characteristic is in the group.
 
-- Cada valor varia de 0 a 1 e representa a frequência relativa com que aquela opção foi escolhida dentro do cluster.
+- Each value ranges from 0 to 1 and represents the relative frequency with which that option was chosen within the cluster.
 
-Esse método nos permite entender o perfil médio e as prioridades de cada segmento.
+This method allows us to understand the average profile and priorities of each segment.
 
+## Cluster Interpretation
 
-## Interpretação dos Clusters
+### Group 1: 234 leads (Cluster 1 — 47%)
 
-### Grupo 1: 234 leads (Cluster 1 — 47%)
+##### Profile:
 
-##### Perfil:
+* Wedding Style (Question 6): Predominantly, they desire "Something intimate and simple, only with close people" (🔸 pergunta_6_B – 99.6%). This is the most striking trait of this group.
+* Investment Possibility (Question 5): Most believe they "Could do something simple" if they were to have the wedding today (🔸 pergunta_5_B – 62.4%).
+* Organization Level (Question 4): A significant portion "Haven't started yet" planning (🔸 pergunta_4_A – 57.3%).
+* Honeymoon Planning (Question 7): Most "Haven't thought about it yet" (🔸 pergunta_7_A – 56.8%).
+* Partner's Support (Question 3): The partner is "Completely involved, dreaming with me" (🔸 pergunta_3_A – 51.7%).
 
-* Estilo de Casamento (Pergunta 6): Predominantemente, desejam "Algo íntimo e simples, só com pessoas próximas" (🔸 pergunta_6_B – 99.6%). Este é o traço mais marcante deste grupo.
-* Possibilidade de Investimento (Pergunta 5): A maioria acredita que "Conseguiríamos fazer algo simples" se fossem realizar o casamento hoje (🔸 pergunta_5_B – 62.4%).
-* Nível de Organização (Pergunta 4): Uma parcela significativa "Não começamos ainda" o planejamento (🔸 pergunta_4_A – 57.3%).
-* Planejamento da Lua de Mel (Pergunta 7): A maioria "Nem pensamos nisso ainda" (🔸 pergunta_7_A – 56.8%).
-* Apoio do Parceiro (Pergunta 3): O parceiro(a) "Está completamente envolvido(a), sonha junto comigo" (🔸 pergunta_3_A – 51.7%).
+##### Behavior Summary:
 
-##### Resumo do Comportamento:
+* This is the largest group and is characterized by a clear desire for a simpler, more intimate wedding.
+* Financially, they feel capable of holding a modest event, but have not yet started practical organization or honeymoon planning.
+* Partner involvement is high, indicating a shared dream.
+* Despite the desired simplicity, the lack of initiation in planning suggests a need for guidance to take the first steps, even for a smaller event.
 
-* Este é o maior grupo e caracteriza-se por um desejo claro por um casamento mais simples e intimista.
-* Financeiramente, sentem-se capazes de realizar um evento modesto, mas ainda não iniciaram a organização prática nem o planejamento da lua de mel.
-* O envolvimento do parceiro é alto, indicando um sonho compartilhado.
-*Apesar da simplicidade desejada, a falta de início no planejamento sugere uma necessidade de orientação para dar os primeiros passos, mesmo para um evento menor.
+##### Needs:
 
-##### Necessidades:
-
-* Ideias e inspirações para casamentos simples, elegantes e econômicos.
-* Ferramentas de planejamento focadas em eventos menores e mais objetivos.
-* Direcionamento sobre como começar a planejar um casamento intimista sem complicação.
-* Conteúdo que valide a escolha por um casamento menor, mostrando seus benefícios e charme.
-
----
-
-### Grupo 2: 206 leads (Cluster 0 - 42%)
-
-##### Perfil:
-* Estilo de Casamento (Pergunta 6): Desejam "Uma cerimônia encantadora, com tudo bem feito", mas não necessariamente o mais luxuoso (🔸 pergunta_6_C – 62.6%).
-* Apoio do Parceiro (Pergunta 3): O parceiro(a) "Está completamente envolvido(a), sonha junto comigo" (🔸 pergunta_3_A – 53.4%).
-* Planejamento da Lua de Mel (Pergunta 7): A grande maioria "Nem pensamos nisso ainda" (🔸 pergunta_7_A – 49.0%).
-* Possibilidade de Investimento (Pergunta 5): Sentem que "Não conseguiríamos bancar nada ainda" se o casamento fosse hoje (🔸 pergunta_5_A – 46.1%).
-* Nível de Organização (Pergunta 4): Ainda "Não começamos ainda" o planejamento (🔸 pergunta_4_A – 44.7%).
-
-##### Resumo do Comportamento:
-* Este grupo, um dos maiores, está em um estágio muito inicial. Têm sonhos e desejos claros sobre o estilo da cerimônia e contam com forte apoio mútuo no casal.
-* No entanto, enfrentam uma paralisia prática devido à falta de organização e, crucialmente, à percepção de incapacidade financeira no momento.
-* Estão sonhando alto, mas se sentem perdidas sobre por onde começar, com o orçamento e a organização sendo os principais gargalos.
-
-##### Necessidades:
-* Guias práticos e passo a passo: "Do zero ao casamento dos sonhos: um guia para iniciantes".
-* Ferramentas básicas de organização: checklists simples, cronogramas iniciais, modelos de planilhas de orçamento para iniciantes.
-* Soluções e ideias para casamentos acessíveis: Conteúdo sobre como realizar uma cerimônia encantadora com orçamento limitado.
-* Conteúdo emocional e motivacional: Que reforce que é normal sentir-se perdido no início e que é possível transformar o sonho em realidade com planejamento, mesmo com recursos limitados.
+* Ideas and inspirations for simple, elegant, and economical weddings.
+* Planning tools focused on smaller, more objective events.
+* Direction on how to start planning an intimate wedding without complications.
+* Content that validates the choice for a smaller wedding, showing its benefits and charm.
 
 ---
 
-### Grupo 3: 55 leads (Cluster 2 — 11%)
+### Group 2: 206 leads (Cluster 0 - 42%)
 
-##### Perfil:
+##### Profile:
 
-* Nível de Clareza (Pergunta 1): Têm um nível de clareza muito alto: "Sabemos exatamente o que queremos e já começamos a organizar" (🔸 pergunta_1_D – 89.1%).
-* Comprometimento (Pergunta 8): Estão altamente comprometidas: "Estamos prontos, queremos agir e realizar de verdade" (🔸 pergunta_8_D – 85.5%).
-* Nível de Organização (Pergunta 4): Já estão bem organizadas: "Temos planilhas, metas e até cronograma definido" (🔸 pergunta_4_D – 58.2%).
-* Possibilidade de Investimento (Pergunta 5): Acreditam que "Poderíamos arcar com boa parte, mas queremos mais liberdade" financeira (🔸 pergunta_5_D – 49.1%).
-* Apoio do Parceiro (Pergunta 3): O parceiro(a) "Está completamente envolvido(a), sonha junto comigo" (🔸 pergunta_3_A – 47.3%).
+* Wedding Style (Question 6): They desire "A charming ceremony, with everything well done", but not necessarily the most luxurious (🔸 pergunta_6_C – 62.6%).
+* Partner's Support (Question 3): The partner is "Completely involved, dreaming with me" (🔸 pergunta_3_A – 53.4%).
+* Honeymoon Planning (Question 7): The vast majority "Haven't thought about it yet" (🔸 pergunta_7_A – 49.0%).
+* Investment Possibility (Question 5): They feel they "Couldn't afford anything yet" if the wedding were today (🔸 pergunta_5_A – 46.1%).
+* Organization Level (Question 4): They "Haven't started yet" planning (🔸 pergunta_4_A – 44.7%).
 
-##### Resumo do Comportamento:
+##### Behavior Summary:
+* This group, one of the largest, is at a very early stage. They have clear dreams and desires about the ceremony style and have strong mutual support as a couple.
+* However, they face practical paralysis due to lack of organization and, crucially, the perception of financial incapacity at the moment.
+* They are dreaming big, but feel lost about where to start, with budget and organization being the main bottlenecks.
 
-* Este é o menor grupo, mas representa as noivas mais decididas e proativas.
-* Possuem clareza total sobre o casamento desejado, estão altamente comprometidas e já possuem um planejamento avançado.
-* Financeiramente, estão em uma posição relativamente confortável, mas buscam otimizar seus recursos para ter "mais liberdade".
-* O apoio do parceiro também é forte, indicando um esforço conjunto e alinhado.
-* Provavelmente já pesquisaram bastante e podem estar buscando otimizar o que já planejaram ou encontrar fornecedores e soluções que se encaixem em sua visão clara.
+##### Needs:
+* Practical, step-by-step guides: "From scratch to dream wedding: a beginner's guide".
+* Basic organization tools: simple checklists, initial timelines, budget spreadsheet templates for beginners.
+* Solutions and ideas for affordable weddings: Content on how to achieve a charming ceremony on a limited budget.
+* Emotional and motivational content: Reinforcing that it's normal to feel lost at the beginning and that it's possible to turn the dream into reality with planning, even with limited resources.
 
-##### Necessidades:
+---
 
-* Soluções para otimizar o orçamento e maximizar o valor do investimento.
-* Ferramentas avançadas de gerenciamento de fornecedores ou cronogramas detalhados.
-* Consultoria especializada para refinar detalhes ou resolver pontos específicos do planejamento.
-* Inspiração para toques finais ou elementos diferenciados que agreguem valor ao casamento já bem delineado.
-* Confirmação de que estão no caminho certo e acesso a fornecedores de confiança.
+### Group 3: 55 leads (Cluster 2 — 11%)
 
-###### Contagens de leads em cada Grupo:
+##### Profile:
+
+* Clarity Level (Question 1): They have a very high level of clarity: "We know exactly what we want and have already started organizing" (�� pergunta_1_D – 89.1%).
+* Commitment (Question 8): They are highly committed: "We are ready, we want to act and truly achieve it" (🔸 pergunta_8_D – 85.5%).
+* Organization Level (Question 4): They are already well organized: "We have spreadsheets, goals, and even a defined timeline" (🔸 pergunta_4_D – 58.2%).
+* Investment Possibility (Question 5): They believe they "Could afford a good part, but we want more freedom" financially (🔸 pergunta_5_D – 49.1%).
+* Partner's Support (Question 3): The partner is "Completely involved, dreaming with me" (🔸 pergunta_3_A – 47.3%).
+
+##### Behavior Summary:
+
+* This is the smallest group, but it represents the most decisive and proactive brides.
+* They have total clarity about the desired wedding, are highly committed, and already have advanced planning.
+* Financially, they are in a relatively comfortable position, but seek to optimize their resources for "more freedom."
+* Partner support is also strong, indicating a joint and aligned effort.
+* They have probably researched extensively and may be looking to optimize what they have already planned or find suppliers and solutions that fit their clear vision.
+
+##### Needs:
+
+* Solutions to optimize the budget and maximize the value of the investment.
+* Advanced tools for vendor management or detailed timelines.
+* Specialized consulting to refine details or resolve specific planning points.
+* Inspiration for finishing touches or differentiated elements that add value to the already well-defined wedding.
+* Confirmation that they are on the right track and access to trusted suppliers.
+
+###### Lead counts in each Group:
 ```{python}
-import plotly.graph_objects as go
-import plotly.express as px
-
 # Contagem dos clusters
 cluster_counts = df_clusters['Cluster'].value_counts().sort_index()
-
-# Novas labels do eixo x
 x_labels = {0: 'Grupo 2', 1: 'Grupo 1', 2: 'Grupo 3'}
 x_axis_labels = [x_labels[c] for c in cluster_counts.index]
-
 vivid_palette_px = px.colors.qualitative.Vivid
 bar_colors = [vivid_palette_px[i % len(vivid_palette_px)] for i in range(len(cluster_counts.index))]
-
 fig = go.Figure()
+
 fig.add_trace(go.Bar(
     x=x_axis_labels,
     y=cluster_counts.values,
@@ -1124,7 +1124,7 @@ fig.add_trace(go.Bar(
 
 fig.update_layout(
     title=dict(
-        text='Leads por Grupo',
+        text='Leads by Group',
         font=dict(size=20, color='black', family='Arial Black'),
         x=0.5,
         xanchor='center',
@@ -1132,43 +1132,45 @@ fig.update_layout(
         yanchor='top',
         pad={'b': 12}
     ),
-    xaxis_title=None,  # Remove legenda do eixo X
-    yaxis_title='Número de Leads',
+    xaxis_title=None,
     xaxis=dict(
         tickangle=0,
         type='category',
         tickfont=dict(size=14, color='black')
     ),
     yaxis=dict(
+        title=dict(
+            text='Número de Leads',
+            font=dict(size=14)
+        ),
         showgrid=True,
         gridcolor='rgba(211, 211, 211, 0.7)',
         griddash='dash',
         gridwidth=1,
-        range=[0, cluster_counts.values.max() * 1.15],
-        titlefont=dict(size=14)
+        range=[0, cluster_counts.values.max() * 1.15]
     ),
     width=520,
     height=450,
     plot_bgcolor='white',
     font=dict(size=14),
-    margin=dict(t=75, b=55, l=60, r=60)  # Margens iguais para centralizar
+    margin=dict(t=75, b=55, l=60, r=60)
 )
 
 fig.show()
 ```
 
-###  **Resumo dos Segmentos**
+###  **Segments Summary**
 
-| Cluster |  Leads |        Estilo           | Organização       |    Investimento      |  Emoção/Comprometimento   |
-| ------- | ------ | ----------------------- | ----------------- | -------------------- | ------------------------- |
-| Grupo 1 |  234   | Simples e íntimo        | Ideias soltas     | Algo simples         | Sonham juntos, cautelosos |
-| Grupo 2 |  206   | Encantador, mas perdido | Não começaram     | Não conseguem bancar | Sonham, mas perdidas      |
-| Grupo 3 |  55    | Encantador a grandioso  | Extremamente alto | Conseguem bancar bem | Altíssimo compromisso     |
+| Cluster |  Leads |        Style          | 	Organization   |    Investment    |     Emotion/Commitment      |
+| ------- | ------ | --------------------- | ----------------- | ---------------- | --------------------------- |
+| Group 1 |  234   | Simple and intimate   | Loose ideas       | Something simple | Dreaming together, cautious |
+| Group 2 |  206   | Charming, but lost    | Haven't started   | Cannot afford    | Dreaming, but lost          |
+| Group 3 |  55    | Charming to grandiose | Extremely high    | Can afford well  | Very high commitment        |
 
-A proposta de segmentação mostra claramente três perfis muito distintos, com necessidades, desejos e condições diferentes.
+The proposed segmentation clearly shows three very distinct profiles, with different needs, desires, and conditions.
 
-A utilização do KMeans com K=3 foi a mais adequada, pois capturou:
+The use of KMeans with K=3 was the most appropriate, as it captured:
 
-- Dois grandes grupos com foco em simplicidade, porém com diferenças sutis no grau de organização e insegurança.
+* Two large groups focusing on simplicity, but with subtle differences in the degree of organization and insecurity.
 
-- Um grupo menor, mas muito valioso, de clientes de alta conversão e maior ticket médio.
+* A smaller, but very valuable group of high-conversion clients and higher average ticket.
